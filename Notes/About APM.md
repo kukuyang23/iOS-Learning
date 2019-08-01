@@ -1,11 +1,11 @@
-#Unity3D 移动游戏  APM 监控笔记
+# Unity3D 移动游戏  APM 监控笔记
 
 近期公司有考虑到一个项目，为此进行了一系列调研，写下来当个笔记。考虑到游戏方面可能只关注于业务层面，而实际上的性能方面可能稍有欠缺，需要为此开发一个SDK用来检测游戏App的性能等等。想到哪写到哪吧。
 
 
 先从一些基础的性能检测分析开始。
 
-###CPU占用率的检测
+### CPU占用率的检测
 
 线程是调度和分配的基本单位，所以只要获取应用所有线程占用CPU的情况即可得知CPU占用率
 
@@ -70,7 +70,7 @@ kern_return_t thread_info
 
 
 
-###内存的监控
+### 内存的监控
 
 物理内存(RAM)同样是系统中稀缺的资源，特别容易产生竞争，所以应用内存与性能直接相关。iOS无交互空间作为备选资源，使用Jetsam来处理系统低RAM事件，通常做法就是Killer Out-Of-Memory。
 
@@ -131,7 +131,7 @@ iOS的同步机制是什么，iOS采用的是双缓冲机制，即为有两个�
 了解完刷新机制，再来说说为什么会产生卡顿。即为当CPU和GPU完成一帧的任务的时间错过了下一次同步信号,那么此帧将不会被显示，屏幕显示的还是之前帧的画面，这就是卡顿的原因。
 
 
-####如何监控卡顿
+#### 如何监控卡顿
 
 我们很简单能想到的方案有两种
 
@@ -196,7 +196,7 @@ static void runLoopObserverCallBack(CFRunLoopObserverRef observer, CFRunLoopActi
 
 ```
 
-###电量的监控
+### 电量的监控
 
 电量比较简单，苹果也给我们提供了简单的方法。
 首先考虑UIDevice，这是设备信息。可以从中获取电池相关信息。
@@ -212,12 +212,12 @@ static void runLoopObserverCallBack(CFRunLoopObserverRef observer, CFRunLoopActi
 
 
 
-##Unity3D相关
+## Unity3D相关
 
 回到正题，以上基础的性能检测我们可以在native层做完，比较简单，现在需要考虑到的是异常的检测和Unity3D相关的一些东西。关于Unity3D跨平台生成iOS游戏的项目，我们可以分为两层来看。在Unity3D引擎中我们使用的是C#脚本，即为C#层面，跨平台出包后会生成一套native语言的包，即为native层。
 
 
-###C#层面
+### C#层面
 
 对于C#的异常捕获，有以下方法
 
@@ -247,7 +247,7 @@ private static void _RegisterExceptionHanlder () {
 原生层面收集C#异常代码并没有什么好方法，C#脚本语言转换成C++后，获取不到C#符号表，无法还原异常信息。
 
 
-###Native(iOS)层面
+### Native(iOS)层面
 
 如前文，通过NSSetUncaughtExceptionHandler来监听异常发生，在回调中拿到exception的信息以及堆栈信息。(Unity项目中 Debugging and crash reporting 默认实现)。此层无太大意义，异常堆栈信息大部分是Unity Runtime和系统库方法,无C#符号表情况下，对业务无太大帮助。
 
@@ -258,14 +258,14 @@ private static void _RegisterExceptionHanlder () {
 
 方式一： 游戏开发人员在项目中集成该SDK。(业内主流第三方平台实现方案， 比如 Bugly  Fabric)
 
-#####需要开发一款SDK，包括：
+##### 需要开发一款SDK，包括：
 - C#插件，负责注册相关回调函数，用于收集异常数据等，其中提供原生SDK的接口封装
 - 原生SDK,负责与C#插件进行通信，性能数据的手机。汇总后最后上传到服务器。
 
 
 方式二： 游戏开发人员仅仅提供一份release安装包，拿到该安装包后，通过注入方式进行性能数据收集。
-####(条件：安装包不做BundleID，越狱等安全检测，因为需要逆向)
-####但是该方案下，动态库没有C#环境，所以无法注册C#回调函数，所以无法收集C#异常信息。
+#### (条件：安装包不做BundleID，越狱等安全检测，因为需要逆向)
+#### 但是该方案下，动态库没有C#环境，所以无法注册C#回调函数，所以无法收集C#异常信息。
 - 编写动态库
 - 通过MonkeyDev等方式，逆向注入动态库，并进行重签名。
 
